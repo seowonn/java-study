@@ -11,21 +11,9 @@
   	<maven.compiler.target>21</maven.compiler.target>
   </properties>
   
-  <dependencies>
-  	<!-- https://mvnrepository.com/artifact/org.mariadb.jdbc/mariadb-java-client -->
-	<dependency>
-	    <groupId>org.mariadb.jdbc</groupId>
-	    <artifactId>mariadb-java-client</artifactId>
-	    <version>3.3.3</version>
-	</dependency>
-  </dependencies>
   
   <build>
-  	<finalName>chapter03</finalName>
+  	<finalName>practice02</finalName>
   </build>
-  
-  <modules>
-  	<module>chapter03</module>
-  	<module>practice01</module>
-  </modules>
+
 </project>
