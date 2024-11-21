@@ -16,4 +16,7 @@
   	<finalName>practice02</finalName>
   </build>
 
+  <modules>
+  	<module>practice03</module>
+  </modules>
 </project>
