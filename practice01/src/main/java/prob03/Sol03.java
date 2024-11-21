@@ -25,6 +25,7 @@ public class Sol03 {
 			}
 			
 			System.out.println("결과값: " + sum);
+			sc.close();
 		}
 	}
 }
