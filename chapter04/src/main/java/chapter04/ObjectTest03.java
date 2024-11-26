@@ -4,6 +4,13 @@ public class ObjectTest03 {
 
 	public static void main(String[] args) {
 		
+		String str1 = "hello";
+		String str2 = new String("hello");
+
+		System.out.println(str1 == str2); // false (참조 비교: 다른 객체)
+		System.out.println(str1.equals(str2)); // true (내용 비교: 동일한 문자)
+		System.out.println(str1.hashCode() + " : " + str2.hashCode());
+		
 		String s1 = new String("hello");
 		String s2 = new String("hello");
 		
