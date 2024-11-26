@@ -11,6 +11,8 @@ public class HashSetTest {
 		Rect r1 = new Rect(10, 20);
 		Rect r2 = new Rect(10, 20);
 		Rect r3 = new Rect(4, 50);
+		
+		System.out.println(r1.hashCode() + " : " + r2.hashCode());
 
 		// 내용은 동일하지만, r1과 r2의 참조값은 다르기 때문에 set에 각 hashcode 검사시, 
 		// 다른 값으로 인식되어 둘 다 추가가 된다. 
@@ -18,8 +20,13 @@ public class HashSetTest {
 		set.add(r2);
 		set.add(r3);
 		
+		System.out.println(set.size());
+
+		Rect prev = null;
 		for(Rect r : set) {
 			System.out.println(r);
+			System.out.println(r.equals(prev));
+			prev = r;
 		}
 	}
 
