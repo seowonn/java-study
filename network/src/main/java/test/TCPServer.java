@@ -7,6 +7,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.net.SocketException;
 
 public class TCPServer {
 
@@ -56,9 +57,11 @@ public class TCPServer {
 				}
 
 				
+			} catch (SocketException e) {
+				System.out.println("[server] Socket Exception: " + e);
 			} catch (IOException e) {
 				System.out.println("error:" + e);
-			} finally {
+			}  finally {
 				try {
 					if(socket != null && socket.isClosed()) {						
 						socket.close();
