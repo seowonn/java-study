@@ -21,7 +21,6 @@ public class EchoRequestHandler extends Thread {
 	public void run() {
 
 		try {
-			
 			InetSocketAddress inetRemoteSocketAddress = (InetSocketAddress) socket.getRemoteSocketAddress();
 			String remoteHostAddress = inetRemoteSocketAddress.getAddress().getHostAddress();
 			int remotePort = inetRemoteSocketAddress.getPort();
