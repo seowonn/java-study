@@ -11,6 +11,7 @@ import java.nio.file.Files;
 
 public class RequestHandler extends Thread {
 	private Socket socket;
+	private final String DOCUMENT_ROOT = "./webapp";
 
 	public RequestHandler(Socket socket) {
 		this.socket = socket;
@@ -57,6 +58,7 @@ public class RequestHandler extends Thread {
 			} else { 
 				// methods: POST, DELETE, PUT, HEAD, CONNECT, ...
 				// SimpleHttpServer에서는 무시(400 Bad Request) 
+				response400Error(outputStream, tokens[2]);
 			}
 			
 			// 예제 응답입니다.
@@ -81,15 +83,24 @@ public class RequestHandler extends Thread {
 		}
 	}
 	
+	private void response400Error(OutputStream outputStream, String string) {
+		/*
+		 * HTTP/1.1 400 Bas Request\n
+		 * Content-Type: text/html; charset=utf-8\n
+		 */
+	}
+
 	private void responseStaticResources(OutputStream os, String url, String protocol) throws IOException{
 		// default (welcome file)
 		if("/".equals(url)) {
 			url = "/index.html";
 		}
 		
-		File file = new File("./webapp" + url);
+		File file = new File(DOCUMENT_ROOT + url);
 		if(!file.exists()) {
 			// 404 response 채우기 과제 
+			response404Error(os, protocol);
+			
 			file = new File("./webapp/error/404.html");
 			byte[] body = Files.readAllBytes(file.toPath());
 			String contentType = Files.probeContentType(file.toPath());
@@ -107,11 +118,19 @@ public class RequestHandler extends Thread {
 		String contentType = Files.probeContentType(file.toPath());
 		
 		// 서버 시작과 테스트를 마친 후, 주석 처리 합니다.
-		os.write("HTTP/1.1 200 OK\n".getBytes("UTF-8"));
+		os.write((protocol + " 200 OK\n").getBytes("UTF-8"));
 		os.write(("Content-Type:" + contentType + "; charset=utf-8\n").getBytes("UTF-8"));
 		os.write("\n".getBytes());
 		os.write(body);
 		
+	}
+
+	private void response404Error(OutputStream os, String protocol) {
+
+		/*
+		 * HTTP/1.1 404 Not Found \n
+		 * Content-Type: text/html; charset=utf-8\n
+		 */
 	}
 
 	public void consoleLog(String message) {
