@@ -52,6 +52,7 @@ public class ChatServerThread extends Thread {
 					doJoin(tokens[1], printWriter);
 				} else if ("message".equals(tokens[0])) {
 					String decodeString = new String(Base64.getDecoder().decode(tokens[1]), StandardCharsets.UTF_8);
+					System.out.println("이거 서버가 받은 request: " + decodeString);
 					doMessage(decodeString);
 				} else if ("quit".equals(tokens[0])) {
 					doQuit(printWriter);
@@ -105,6 +106,7 @@ public class ChatServerThread extends Thread {
 	}
 
 	private void broadcast(String data) {
+		System.out.println("[ChatServerThread] 서버가 client로 전달할 데이터  :" + data);
 		synchronized (listWriters) {
 			for (Writer writer : listWriters) {
 				PrintWriter printWriter = (PrintWriter) writer;

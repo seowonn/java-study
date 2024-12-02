@@ -11,9 +11,18 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.util.Base64;
+
+import chat.ChatServer;
 
 public class ChatWindow {
 
@@ -23,8 +32,14 @@ public class ChatWindow {
 	private TextField textField;
 	private TextArea textArea;
 
+	Socket socket = null;
+	PrintWriter printWriter = null;
+	BufferedReader bufferedReader = null;
+	ChatClientThread chatClientThread = null;
+	private static final String SERVER_IP = "192.168.0.10";
+
 	public ChatWindow(String name) {
-		// 소캣은 ChatWindow 호출 시에 생성한다.
+		// 
 		frame = new Frame(name);
 		pannel = new Panel();
 		buttonSend = new Button("Send");
@@ -33,6 +48,25 @@ public class ChatWindow {
 	}
 
 	public void show() {
+		
+		// 1. 서버 연결 작업 - 소캣과 ChatClientReceiveThread는 ChatWindow 호출 시에 생성 및 시작한다.
+		try {
+			socket = new Socket();
+			socket.connect(new InetSocketAddress(SERVER_IP, ChatServer.PORT));
+			bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+			// JOIN protocol 생성
+			printWriter = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "utf-8"), true);
+			printWriter.println("join:" + frame.getTitle());
+			printWriter.flush();
+			
+			chatClientThread = new ChatClientThread(bufferedReader);
+			chatClientThread.start();
+
+		} catch (IOException e) {
+			log("error : " + e);
+		}
+
 		// Button
 		buttonSend.setBackground(Color.GRAY);
 		buttonSend.setForeground(Color.WHITE);
@@ -42,26 +76,23 @@ public class ChatWindow {
 		buttonSend.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent actionEvent) {
-				sendMessage();
+				sendMessage(printWriter);
 			}
 		});
-		
-		// 위 코드를 아래와 같이 람다 형식으로 바꿀 수 있다. 
-		/*
-		buttonSend.addActionListener(
-				(ActionEvent actionEvent) -> {}
-		);
-		*/
 
-		// Textfield - 채팅 전송 문자 쓰는 곳
-		textField.setColumns(80);
-		// send 버튼 말고도 그냥 엔터 눌렀을 때 메시지를 전송하기 위한 기능 추가 
+		// 위 코드를 아래와 같이 람다 형식으로 바꿀 수 있다.
+		/*
+		 * buttonSend.addActionListener( (ActionEvent actionEvent) -> {} );
+		 */
+
+		textField.setColumns(80); // Textfield - 채팅 전송 문자 쓰는 곳
+		// send 버튼 말고도 그냥 엔터 눌렀을 때 메시지를 전송하기 위한 기능 추가
 		textField.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
 				char keyChar = e.getKeyChar();
-				if(keyChar == KeyEvent.VK_ENTER) {
-					sendMessage();
+				if (keyChar == KeyEvent.VK_ENTER) {
+					sendMessage(printWriter);
 				}
 			}
 		});
@@ -78,59 +109,100 @@ public class ChatWindow {
 
 		// Frame
 		frame.addWindowListener(new WindowAdapter() {
+			// window 종료 시를 quit 요청으로 생각하고 서버에서 quit ack 신호를 응답으로 주기
 			public void windowClosing(WindowEvent e) {
-				finish();
+				finish(bufferedReader, printWriter);
 			}
 		});
 		frame.setVisible(true);
 		frame.pack();
-
-		// main thread는 window를 띄우고 없어진다.
-
-		// 1. 서버 연결 작업
-		// 항상 통신은 보내고 받아야 한다. 즉, ACK 신호를 무조건 받는 작업을 넣어야 한다.
-		// 2. IO Stream Set
-		// 3. JOIN Protocol
-		// 4. ChatClient Thread 생성
 	}
-	
-	// window 종료 시를 quit 요청으로 생각하고 quit ack 신호를 응답으로 주자. 
 
-	private void sendMessage() {
+	private void sendMessage(PrintWriter printWriter) {
 		String message = textField.getText();
 		System.out.println("메세지를 보내는 프로토콜 구현!: " + message);
-		
+
 		textField.setText("");
 		textField.requestFocus();
-		
+
+		try {
+			String endcodedInput = Base64.getEncoder().encodeToString(message.getBytes("UTF-8"));
+			printWriter.println("message:" + endcodedInput);
+			printWriter.flush();
+		} catch (IOException e) {
+			log("error : " + e);
+		}
+
 		// ChatClientThread에서 서버로 부터 받은 메시지가 있다고 치고~
-		// 여기 마무리 하는 게 과제 
-		updateTextArea("아무개:" + message);
+		// 여기 마무리 하는 게 과제
 	}
-	
+
 	private void updateTextArea(String message) {
 		textArea.append(message);
 		textArea.append("\n");
 	}
-	
-	// 서버가 죽으면 client도 꺼야 좋다. 그렇다고 client에서 바로 종료하면 서비스적이지 X.
-	// 따라서 알려주고 꺼야 함. 
-	private void finish() {
-		// quit protocol 구현하고 quit:ok ack 신호가 왔을 때, 프로그램을 종료한다. 
-		
-		
-		// 프로그램 종료 방법 : main에서 return으로 끝내기 또는 아래와 같이 실행 
+
+	// 서버가 죽으면 client도 꺼야 좋다. 그렇다고 client에서 바로 종료하면 서비스적이지 X서 알려주고 꺼야 함.
+	private void finish(BufferedReader bufferedReader, PrintWriter printWriter) {
+		// quit protocol 구현하고 quit:ok ack 신호가 왔을 때, 프로그램을 종료한다.
+		try {
+			printWriter.println("quit:" + frame.getTitle());
+			printWriter.flush();
+			
+			try {
+				chatClientThread.join();
+				if (socket != null && !socket.isClosed()) {
+					socket.close();
+				}
+			} catch (InterruptedException e) {
+				log("error:" + e);
+			}
+
+			
+//			while (true) {
+//				String message = br.readLine();
+//				if ("quit:ok".equals(message)) {
+//					if (socket != null && !socket.isClosed()) {
+//						socket.close();
+//					}
+//					break;
+//				}
+//			}
+		} catch (IOException e) {
+			log("error: " + e);
+		}
 		System.exit(0);
 	}
-	
-	// 데이터를 보내는 것의 시뮬레이션은 우리 과제 
-	// main 화면, 채팅 창을 닫았을 때, 어떤 순서로, 어떤 메모리의 스레드가 닫히는지 파악하기 
-	
-	// inner class로 선언하여 메시지를 스레드로부터 추출해온다. 
+
+	// inner class로 선언하여 메시지를 스레드로부터 추출해온다.
 	private class ChatClientThread extends Thread {
+
+		private BufferedReader bufferedReader;
+
+		private ChatClientThread(BufferedReader br) {
+			this.bufferedReader = br;
+		}
+
 		@Override
 		public void run() {
-			updateTextArea("....");
+			while (true) {
+				try {
+					String message = bufferedReader.readLine();
+					// 항상 통신은 보내고 받아야 한다. 즉, ACK 신호를 무조건 받는 작업을 넣어야 한다.
+					if ("quit:ok".equals(message)) {
+//						finish(bufferedReader);
+						break;
+					} else {
+						updateTextArea(message);
+					}
+				} catch (IOException e) {
+					log("error : " + e);
+				}
+			}
 		}
+	}
+
+	public static void log(String message) {
+		System.out.println("[ChatWindow]: " + message);
 	}
 }
