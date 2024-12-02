@@ -36,10 +36,9 @@ public class ChatWindow {
 	PrintWriter printWriter = null;
 	BufferedReader bufferedReader = null;
 	ChatClientThread chatClientThread = null;
-	private static final String SERVER_IP = "192.168.0.10";
+	private static final String SERVER_IP = "192.168.1.163";
 
 	public ChatWindow(String name) {
-		// 
 		frame = new Frame(name);
 		pannel = new Panel();
 		buttonSend = new Button("Send");
@@ -48,7 +47,7 @@ public class ChatWindow {
 	}
 
 	public void show() {
-		
+
 		// 1. 서버 연결 작업 - 소캣과 ChatClientReceiveThread는 ChatWindow 호출 시에 생성 및 시작한다.
 		try {
 			socket = new Socket();
@@ -59,7 +58,7 @@ public class ChatWindow {
 			printWriter = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "utf-8"), true);
 			printWriter.println("join:" + frame.getTitle());
 			printWriter.flush();
-			
+
 			chatClientThread = new ChatClientThread(bufferedReader);
 			chatClientThread.start();
 
@@ -119,6 +118,12 @@ public class ChatWindow {
 	}
 
 	private void sendMessage(PrintWriter printWriter) {
+
+		if (printWriter == null) {
+			log("error: PrintWriter is null.");
+			return;
+		}
+
 		String message = textField.getText();
 		System.out.println("메세지를 보내는 프로토콜 구현!: " + message);
 
@@ -133,8 +138,6 @@ public class ChatWindow {
 			log("error : " + e);
 		}
 
-		// ChatClientThread에서 서버로 부터 받은 메시지가 있다고 치고~
-		// 여기 마무리 하는 게 과제
 	}
 
 	private void updateTextArea(String message) {
@@ -144,11 +147,11 @@ public class ChatWindow {
 
 	// 서버가 죽으면 client도 꺼야 좋다. 그렇다고 client에서 바로 종료하면 서비스적이지 X서 알려주고 꺼야 함.
 	private void finish(BufferedReader bufferedReader, PrintWriter printWriter) {
-		// quit protocol 구현하고 quit:ok ack 신호가 왔을 때, 프로그램을 종료한다.
 		try {
+			// QUIT protocol 구현
 			printWriter.println("quit:" + frame.getTitle());
 			printWriter.flush();
-			
+
 			try {
 				chatClientThread.join();
 				if (socket != null && !socket.isClosed()) {
@@ -158,16 +161,6 @@ public class ChatWindow {
 				log("error:" + e);
 			}
 
-			
-//			while (true) {
-//				String message = br.readLine();
-//				if ("quit:ok".equals(message)) {
-//					if (socket != null && !socket.isClosed()) {
-//						socket.close();
-//					}
-//					break;
-//				}
-//			}
 		} catch (IOException e) {
 			log("error: " + e);
 		}
@@ -188,10 +181,13 @@ public class ChatWindow {
 			while (true) {
 				try {
 					String message = bufferedReader.readLine();
-					// 항상 통신은 보내고 받아야 한다. 즉, ACK 신호를 무조건 받는 작업을 넣어야 한다.
+
+					// ChatClientThread는 Main thread와 달리 항상 서버의 응답을 기다리고 있기 때문에
+					// 서버의 ack 응답을 받는 부분이 구현되어야 한다.
 					if ("quit:ok".equals(message)) {
-//						finish(bufferedReader);
 						break;
+					} else if ("join:ok".equals(message)) {
+						continue;
 					} else {
 						updateTextArea(message);
 					}
