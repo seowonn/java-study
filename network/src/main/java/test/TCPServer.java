@@ -8,6 +8,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 
 public class TCPServer {
 
@@ -17,6 +18,10 @@ public class TCPServer {
 		try {
 			// 1. 서버 소캣 객체 생성
 			serverSocket = new ServerSocket();
+			
+			// 1-1. close를 먼저하고 기다리는 상태: FIN_WAIT -> TIME_WAIT으로 소캣의 상태가 바뀐다. 
+			// 위 상태에서도 소켓의 포트 할당이 가능하도록 하는 옵션
+			serverSocket.setReuseAddress(true);
 			
 			// 2. 바인딩 (binding)
 			// IPAddress: 0.0.0.0: 으로 설정함으로써 특정 호스트에만 국한하여 IP를 바인딩하지 않는다. 
@@ -53,6 +58,12 @@ public class TCPServer {
 					System.out.println("[server] received: " + data);
 
 					// 6. 데이터 쓰기 - 클라이언트로 데이터 전송
+					// SO_TIMEOUT Test
+//					try {
+//						Thread.sleep(3000);
+//					} catch (InterruptedException e) {
+//						e.printStackTrace();
+//					}
 					os.write(data.getBytes("utf-8")); // write는 blocking이 아님 
 				}
 
