@@ -3,6 +3,7 @@ import java.util.Scanner;
 
 public class ChatClientApp {
 
+	// main 스레드 생성 및 동작
 	public static void main(String[] args) {
 		String name = null;
 		Scanner scanner = new Scanner(System.in);
@@ -22,7 +23,6 @@ public class ChatClientApp {
 		
 		scanner.close();
 
-		// window 자체도 하나의 스레드이다.
 		new ChatWindow(name).show();
 	}
 

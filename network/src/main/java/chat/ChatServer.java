@@ -12,32 +12,40 @@ import java.util.List;
 public class ChatServer {
 
 	public static final int PORT = 8080;
+	public static final String SERVER_IP = "127.0.0.1";
+	public static final String DEFAULT_HOST = "0.0.0.0";
+
 	private static List<Writer> listWriters = new ArrayList<>();
+	private static ServerSocket serverSocket;
 
 	public static void main(String[] args) {
-
-		ServerSocket serverSocket = null;
-
 		try {
-			// 1. 서버 소캣 생성
 			serverSocket = new ServerSocket();
-
-			// 2. 바인딩
-			String hostAddress = InetAddress.getLocalHost().getHostAddress();
-			serverSocket.bind(new InetSocketAddress("0.0.0.0", PORT));
+//			String hostAddress = InetAddress.getLocalHost().getHostAddress();
+			serverSocket.bind(new InetSocketAddress(DEFAULT_HOST, PORT));
 //			serverSocket.bind(new InetSocketAddress(hostAddress, PORT));
-			log("연결 기다림 " + hostAddress + ":" + PORT);
+			log("연결 기다림 " + DEFAULT_HOST + ":" + PORT);
 
-			// 3. 요청 대기
 			while (true) {
 				Socket socket = serverSocket.accept();
 				new ChatServerThread(socket, listWriters).start();
 			}
-
 		} catch (IOException e) {
 			log("error: " + e);
+		} finally {
+			closeServerResource();
 		}
 
+	}
+
+	private static void closeServerResource() {
+		if (serverSocket != null) {
+			try {
+				serverSocket.close();
+			} catch (IOException e) {
+				log("서버 소켓 닫는 중 에러 발생: " + e);
+			}
+		}
 	}
 
 	public static void log(String message) {

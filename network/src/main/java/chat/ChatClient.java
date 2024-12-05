@@ -12,8 +12,6 @@ import java.util.Scanner;
 
 public class ChatClient {
 
-	private static final String SERVER_IP = "127.0.0.1";
-
 	public static void main(String[] args) {
 
 		Scanner scanner = null;
@@ -27,7 +25,7 @@ public class ChatClient {
 			socket = new Socket();
 
 			// 3. 연결
-			socket.connect(new InetSocketAddress(SERVER_IP, ChatServer.PORT));
+			socket.connect(new InetSocketAddress(ChatServer.SERVER_IP, ChatServer.PORT));
 
 			// 4. reader/writer 생성
 			PrintWriter pw = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), "utf-8"), true);
