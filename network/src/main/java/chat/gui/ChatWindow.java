@@ -36,7 +36,7 @@ public class ChatWindow {
 	PrintWriter printWriter = null;
 	BufferedReader bufferedReader = null;
 	ChatClientThread chatClientThread = null;
-	private static final String SERVER_IP = "192.168.1.163";
+	private static final String SERVER_IP = "127.0.0.1";
 
 	public ChatWindow(String name) {
 		frame = new Frame(name);
@@ -48,7 +48,7 @@ public class ChatWindow {
 
 	public void show() {
 
-		// 1. 서버 연결 작업 - 소캣과 ChatClientReceiveThread는 ChatWindow 호출 시에 생성 및 시작한다.
+		// 1. 서버 연결 작업 - 소캣과 ChatClientThread는 ChatWindow의 show 메서드 호출 시에 생성 및 시작한다.
 		try {
 			socket = new Socket();
 			socket.connect(new InetSocketAddress(SERVER_IP, ChatServer.PORT));

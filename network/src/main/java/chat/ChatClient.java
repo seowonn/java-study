@@ -12,7 +12,7 @@ import java.util.Scanner;
 
 public class ChatClient {
 
-	private static final String SERVER_IP = "192.168.1.163";
+	private static final String SERVER_IP = "127.0.0.1";
 
 	public static void main(String[] args) {
 
